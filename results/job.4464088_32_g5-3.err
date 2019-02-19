@@ -1,0 +1,20 @@
+Module opencv/3.4.1 loaded 
+2019-01-29 01:43:30.204913: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-01-29 01:43:30.386258: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1405] Found device 0 with properties: 
+name: GeForce GTX 1080 Ti major: 6 minor: 1 memoryClockRate(GHz): 1.582
+pciBusID: 0000:82:00.0
+totalMemory: 10.92GiB freeMemory: 3.18GiB
+2019-01-29 01:43:30.386293: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1484] Adding visible gpu devices: 0
+2019-01-29 01:43:31.109317: I tensorflow/core/common_runtime/gpu/gpu_device.cc:965] Device interconnect StreamExecutor with strength 1 edge matrix:
+2019-01-29 01:43:31.109358: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971]      0 
+2019-01-29 01:43:31.109365: I tensorflow/core/common_runtime/gpu/gpu_device.cc:984] 0:   N 
+2019-01-29 01:43:31.109587: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1097] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 2888 MB memory) -> physical GPU (device: 0, name: GeForce GTX 1080 Ti, pci bus id: 0000:82:00.0, compute capability: 6.1)
+2019-01-29 01:43:44.175860: W tensorflow/core/common_runtime/bfc_allocator.cc:219] Allocator (GPU_0_bfc) ran out of memory trying to allocate 2.11GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-01-29 01:43:44.659721: W tensorflow/core/common_runtime/bfc_allocator.cc:219] Allocator (GPU_0_bfc) ran out of memory trying to allocate 2.11GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-01-29 01:43:45.154065: W tensorflow/core/common_runtime/bfc_allocator.cc:219] Allocator (GPU_0_bfc) ran out of memory trying to allocate 2.03GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-01-29 01:43:45.168839: W tensorflow/core/common_runtime/bfc_allocator.cc:219] Allocator (GPU_0_bfc) ran out of memory trying to allocate 2.11GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-01-29 01:43:45.786652: W tensorflow/core/common_runtime/bfc_allocator.cc:219] Allocator (GPU_0_bfc) ran out of memory trying to allocate 2.03GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+2019-01-29 01:43:45.797565: W tensorflow/core/common_runtime/bfc_allocator.cc:219] Allocator (GPU_0_bfc) ran out of memory trying to allocate 2.11GiB. The caller indicates that this is not a failure, but may mean that there could be performance gains if more memory were available.
+/home/ashakour/Fashion_Classification/Fashion_100000_256_server/keras/lib/python3.6/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Using TensorFlow backend.

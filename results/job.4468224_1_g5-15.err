@@ -1,0 +1,25 @@
+Module cudnn/7.0 loaded 
+Module cuda/9.0 loaded 
+Module opencv/3.4.1 loaded 
+2019-02-11 13:43:40.827181: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-02-11 13:43:41.044067: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1405] Found device 0 with properties: 
+name: GeForce GTX 1080 Ti major: 6 minor: 1 memoryClockRate(GHz): 1.582
+pciBusID: 0000:04:00.0
+totalMemory: 10.92GiB freeMemory: 10.76GiB
+2019-02-11 13:43:41.249328: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1405] Found device 1 with properties: 
+name: GeForce GTX 1080 Ti major: 6 minor: 1 memoryClockRate(GHz): 1.582
+pciBusID: 0000:82:00.0
+totalMemory: 10.92GiB freeMemory: 8.41GiB
+2019-02-11 13:43:41.249411: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1484] Adding visible gpu devices: 0, 1
+2019-02-11 13:43:42.079999: I tensorflow/core/common_runtime/gpu/gpu_device.cc:965] Device interconnect StreamExecutor with strength 1 edge matrix:
+2019-02-11 13:43:42.080075: I tensorflow/core/common_runtime/gpu/gpu_device.cc:971]      0 1 
+2019-02-11 13:43:42.080084: I tensorflow/core/common_runtime/gpu/gpu_device.cc:984] 0:   N N 
+2019-02-11 13:43:42.080089: I tensorflow/core/common_runtime/gpu/gpu_device.cc:984] 1:   N N 
+2019-02-11 13:43:42.080622: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1097] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 10409 MB memory) -> physical GPU (device: 0, name: GeForce GTX 1080 Ti, pci bus id: 0000:04:00.0, compute capability: 6.1)
+2019-02-11 13:43:42.081586: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1097] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:1 with 8117 MB memory) -> physical GPU (device: 1, name: GeForce GTX 1080 Ti, pci bus id: 0000:82:00.0, compute capability: 6.1)
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+srun: got SIGCONT
+slurmstepd: error: *** STEP 4468224.0 ON g5-15 CANCELLED AT 2019-02-11T14:16:58 ***
+slurmstepd: error: *** JOB 4468224 ON g5-15 CANCELLED AT 2019-02-11T14:16:58 ***
+srun: forcing job termination
+srun: error: g5-15: task 0: Terminated

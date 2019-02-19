@@ -1,0 +1,18 @@
+Module cudnn/7.0 loaded 
+WARNING: $PATH does not agree with $PATH_modshare counter. The following directories' usage counters were adjusted to match. Note that this may mean that module unloading may not work correctly.
+ /share/apps/bio/miniconda2/bin
+Module cuda/9.0 loaded 
+Module opencv/3.4.1 loaded 
+2019-02-11 14:11:46.536502: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+2019-02-11 14:11:47.305840: E tensorflow/stream_executor/cuda/cuda_driver.cc:397] failed call to cuInit: CUDA_ERROR_INVALID_DEVICE
+2019-02-11 14:11:47.305916: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:163] retrieving CUDA diagnostic information for host: g5-19
+2019-02-11 14:11:47.305924: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:170] hostname: g5-19
+2019-02-11 14:11:47.305971: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:194] libcuda reported version is: 410.48.0
+2019-02-11 14:11:47.306031: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:198] kernel reported version is: 410.48.0
+2019-02-11 14:11:47.306043: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:305] kernel version seems to match DSO: 410.48.0
+srun: got SIGCONT
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 4468241 ON g5-19 CANCELLED AT 2019-02-11T14:22:04 ***
+srun: forcing job termination
+slurmstepd: error: *** STEP 4468241.0 ON g5-19 CANCELLED AT 2019-02-11T14:22:04 ***
+srun: error: g5-19: task 0: Terminated

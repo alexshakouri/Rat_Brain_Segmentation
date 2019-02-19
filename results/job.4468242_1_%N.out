@@ -1,0 +1,22 @@
+
+===========================================================================
+Job Finished
+
+Name                : Full_Model_test
+User                : ashakour
+Partition           : qigpu
+Nodes               : g5-15
+Cores               : 1
+State               : RUNNING
+Submit              : 2019-02-11T14:17:33
+Start               : 2019-02-11T14:17:34
+End                 : --
+Reserved walltime   : 3-00:00:00
+Used walltime       :   01:30:08
+Used CPU time       :   01:08:04
+% User (Computation): 75.97%
+% System (I/O)      : 24.03%
+Mem reserved        : 10000M/node
+Max Mem used        : 2.98G (g5-15)
+Max Disk Write      : 4.40M (g5-15)
+Max Disk Read       : 54.61M (g5-15)
