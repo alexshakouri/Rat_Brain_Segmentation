@@ -23,10 +23,19 @@ from model_dilation import get_frontend
 
 import pdb
 
-weights_path = 'results/weights_multi-label_dice_2_128.h5'
-train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
-test_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
-predictions_path = './predictions/dilation_reducelr_test2'
+#Path for server
+#weights_path = 'results/weights_multi-label_dice_2_128.h5'
+#train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
+#test_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
+#predictions_path = './predictions/dilation_reducelr_test2'
+
+#Path for laptop
+weights_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multi-label_dice_2_128.h5'
+train_images_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/data/dataAll_128/'
+test_images_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
+predictions_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/predictions/dilation_reducelr_test2'
+
+num_classes = 14
 
 imSize = 128
 
@@ -36,11 +45,11 @@ gpu = '0'
 def predict(mean=0.0, std=1.0):
     # load and normalize data
     if mean == 0.0 and std == 1.0:
-        imgs_train, _, _ = load_data(train_images_path)
+        imgs_train, _, _ = load_data(train_images_path, num_classes)
         mean = np.mean(imgs_train)
         std = np.std(imgs_train)
 
-    imgs_test, imgs_mask_test, names_test = load_data(test_images_path)
+    imgs_test, imgs_mask_test, names_test = load_data(test_images_path, num_classes)
 
     mean = np.mean(imgs_test)
     std = np.std(imgs_test)
@@ -53,13 +62,13 @@ def predict(mean=0.0, std=1.0):
 
     # load model with weights
     #model = unet()
-    model = get_frontend(imSize,imSize)
+    model = get_frontend(imSize,imSize, num_classes)
     model.load_weights(weights_path)
 
     # make predictions
     imgs_mask_pred = model.predict(imgs_test, verbose=1)
 
-    pdb.set_trace()
+    #pdb.set_trace()
 
     # save to mat file for further processing
     if not os.path.exists(predictions_path):
@@ -84,21 +93,21 @@ def predict(mean=0.0, std=1.0):
         #print(image.shape)
         image_rgb = gray2rgb(image[:, :, 0])
 
-        # prediction contour image
-        pred = (np.round(pred[:, :, 0]) * 255.0).astype(np.uint8)
+        # prediction contour image (add all the predictions)
+        pred = (np.round(np.sum(pred[:, :, :], axis=2)) * 255.0).astype(np.uint8)
         pred, contours, _ = cv2.findContours(
             pred, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         pred = np.zeros(pred.shape)
         cv2.drawContours(pred, contours, -1, (255, 0, 0), 1)
 
-        # ground truth contour image
-        mask = (np.round(mask[:, :, 0]) * 255.0).astype(np.uint8)
+        # ground truth contour image (add all the masks)
+        mask = (np.round(np.sum(mask[:, :, :], axis=2)) * 255.0).astype(np.uint8)
         mask, contours, _ = cv2.findContours(
             mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         mask = np.zeros(mask.shape)
         cv2.drawContours(mask, contours, -1, (255, 0, 0), 1)
 
-        # combine image with contours
+        # combine image with contours using red for pred and blue for mask
         pred_rgb = np.array(image_rgb)
         annotation = pred_rgb[:, :, 1]
         annotation[np.maximum(pred, mask) == 255] = 0
