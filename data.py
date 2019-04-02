@@ -45,6 +45,9 @@ def load_data(path, num_classes):
     #This needs to be u because if it is a string then it will be bytes!!
     names = np.empty(total_count, dtype= '|U64')   
 
+    #choose the region 
+    region_mask = 5
+
     i = 0
     for image_name in images_list:
         if 'mask' in image_name:
@@ -68,11 +71,14 @@ def load_data(path, num_classes):
             img = np.array([img])
 
         img_mask = np.array([img_mask])
-        
-        
-        #do one image for every class
-        for c in range(num_classes):
-            split_masks[:,:,c] = (img_mask == (c+1))
+
+        #do one image for every class (single class choose a mask num)
+        if(num_classes > 1):
+            #PUT IN THE REAL THING HERE THIS DOESN"T WORK
+            for c in range(num_classes):
+                split_masks[:,:,c] = (img_mask == np.round((c+1)*255/14))
+        else:
+            split_masks[:,:,0] = (img_mask == np.round(region_mask*255/14))
 
         # make the shapes line up have (1,256,256) want (256,256,1)
         img = np.squeeze(img)
@@ -88,15 +94,12 @@ def load_data(path, num_classes):
         masks = masks[..., np.newaxis]
     
     masks = masks.astype('float32')
-    #masks /= 255. without this my values are from 1-14
 
-    
-        
 
     return images, masks, names
 
 
-def oversample(images, masks, imgs_names_train):
+def oversample(images, masks, imgs_names_train, num_classes):
     """
     Repeats 2 times every slice with nonzero mask
 
@@ -148,18 +151,21 @@ def oversample(images, masks, imgs_names_train):
 
     
    
-    images_Aug = np.array(images_Aug)
-    masks_Aug = np.array(masks_Aug)
+    images_Aug = np.reshape(np.array(images_Aug), images_o.shape)
+    masks_Aug = np.reshape(np.array(masks_Aug), masks_o.shape)
 
-    images_Aug = np.squeeze(images_Aug)
-    images_Aug = images_Aug[:,:,:,None]
+    #images_Aug = np.squeeze(images_Aug)
+    #images_Aug = images_Aug[:,:,:,None]
 
-    masks_Aug = np.squeeze(masks_Aug)
-    #masks_Aug = masks_Aug[:,:,:,:,None] #need the fourth for the num_classes
+    #masks_Aug = np.squeeze(masks_Aug)
+    
+    #if (num_classes == 1):
+    #    masks_Aug = masks_Aug[:,:,:,None] #need the fourth for the num_classes
 
     #save images just to see! looks fine!
     #for i in range(len(images_Aug)):
     #    mplimg.imsave(os.path.join('./test', str(i) + '.png'), np.squeeze(images_Aug[i]))
+
 
     return np.vstack((images, images_Aug)), np.vstack((masks, masks_Aug))
 
