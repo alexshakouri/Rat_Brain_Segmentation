@@ -30,17 +30,18 @@ import pdb
 #predictions_path = './predictions/dilation_reducelr_test2'
 
 #Path for laptop
-weights_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multi-label_dice_2_128.h5'
-train_images_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/data/dataAll_128/'
-test_images_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
-predictions_path = '/media/alexshakouri/TOURO Mobile USB3.01/Research/Code/brain-segmentation-master/predictions/dilation_reducelr_test2'
+weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_singleLabel1_1_128.h5'
+train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128/'
+test_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
+predictions_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/predictions/weights_singleLabel_1/'
 
-num_classes = 14
+num_classes = 1
 
 imSize = 128
 
 gpu = '0'
 
+region_mask = 5
 
 def predict(mean=0.0, std=1.0):
     # load and normalize data
@@ -50,10 +51,9 @@ def predict(mean=0.0, std=1.0):
         std = np.std(imgs_train)
 
     imgs_test, imgs_mask_test, names_test = load_data(test_images_path, num_classes)
-
+    
     mean = np.mean(imgs_test)
     std = np.std(imgs_test)
-
 
     original_imgs_test = imgs_test.astype(np.uint8)
 
@@ -67,9 +67,6 @@ def predict(mean=0.0, std=1.0):
 
     # make predictions
     imgs_mask_pred = model.predict(imgs_test, verbose=1)
-
-    #pdb.set_trace()
-
     # save to mat file for further processing
     if not os.path.exists(predictions_path):
         os.mkdir(predictions_path)
@@ -110,16 +107,17 @@ def predict(mean=0.0, std=1.0):
         # combine image with contours using red for pred and blue for mask
         pred_rgb = np.array(image_rgb)
         annotation = pred_rgb[:, :, 1]
-        annotation[np.maximum(pred, mask) == 255] = 0
+        #HERE IS THE PROBLEM
+        
+        annotation[np.maximum(pred, mask[:,:,0]) == 255] = 0
         pred_rgb[:, :, 0] = pred_rgb[:, :, 1] = pred_rgb[:, :, 2] = annotation
-        pred_rgb[:, :, 2] = np.maximum(pred_rgb[:, :, 2], mask)
+        pred_rgb[:, :, 2] = np.maximum(pred_rgb[:, :, 2], mask[:,:,0])
         pred_rgb[:, :, 0] = np.maximum(pred_rgb[:, :, 0], pred)
 
         imsave(os.path.join(predictions_path,
                             names_test[i] + '.png'), pred_rgb)
 
     return imgs_mask_test, imgs_mask_pred, names_test
-
 
 def evaluate(imgs_mask_test, imgs_mask_pred, names_test):
     test_pred = list(zip(imgs_mask_test, imgs_mask_pred))
@@ -153,9 +151,11 @@ def evaluate(imgs_mask_test, imgs_mask_pred, names_test):
 
 
 def dice_coefficient(prediction, ground_truth):
+    prediction = np.squeeze(prediction)
+    ground_truth = np.squeeze(ground_truth)
     prediction = np.round(prediction).astype(int)
     ground_truth = np.round(ground_truth).astype(int)
-
+    
     return np.sum(prediction[ground_truth == 1]) * 2.0 / (np.sum(prediction) + np.sum(ground_truth))
 
 
@@ -200,8 +200,8 @@ if __name__ == '__main__':
     imgs_mask_test, imgs_mask_pred, names_test = predict()
 
     #check the net
-    checkDice = dice_coef(imgs_mask_pred, imgs_mask_test)
-    print('Dice Coeff: ' + str(sess.run(checkDice)))
+    #checkDice = dice_coef(imgs_mask_pred, imgs_mask_test)
+    #`print('Dice Coeff: ' + str(sess.run(checkDice)))
 
     values, labels = evaluate(imgs_mask_test, imgs_mask_pred, names_test)
 
