@@ -18,33 +18,51 @@ from net import dice_coef
 from net import dice_coef_loss
 from net import unet
 from model_dilation import get_frontend
-from model_dilation import add_softmax
+import pdb
 
 train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
 valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
-init_weights_path = '/home/ashakour/MRI_segmentation/semantic_segmentation/results/weights_dilation_128_WHAT.h5'
-weights_path = '/home/ashakour/MRI_segmentation/semantic_segmentation/results/'
-log_path = '/home/ashakour/MRI_segmentation/semantic_segmentation/results/logs/singleLabel/singleLabel1_reduceModel_1'
+
+
+#train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
+#valid_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/dataVal_128/'
+
+init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
+weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
+log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/singleLabel1_dilation_dice_1'
 
 
 
 cross_val = True
 
-gpu = '1'
+gpu = '0'
 
 epochs = 128
-batch_size = 3
-base_lr = 1e-5
-decay_lr = 0.01
+batch_size = 15
+base_lr = 1e-6
+decay_lr = 0.00 # ADAM optimizer doesn't need decay as the base_lr is a max for it. 
 imageDim = 128
 num_classes = 1
+class_weight = [1,1]
 
+def create_weighted_binary_crossentropy(class_weight):
+    def weighted_binary_crossentropy(y_true, y_pred):
+
+        # Original binary crossentropy (see losses.py):
+        # K.mean(K.binary_crossentropy(y_true, y_pred), axis=-1)
+
+        # Calculate the binary crossentropy
+        b_ce = K.binary_crossentropy(y_true, y_pred)
+
+        # Apply the weights
+        weight_vector = y_true * class_weight[1] + (1. - y_true) * class_weight[0]
+        weighted_b_ce = weight_vector * b_ce
+        # Return the mean error
+        return K.mean(weighted_b_ce)
+    return weighted_binary_crossentropy
 
 def train():
     imgs_train, imgs_mask_train, imgs_names_train = load_data(train_images_path, num_classes)
-
-    print('shape_train = ', imgs_train.shape)
-    print('shape_names = ', imgs_names_train.shape)
 
     mean = np.mean(imgs_train)
     std = np.std(imgs_train)
@@ -60,26 +78,29 @@ def train():
     imgs_train, imgs_mask_train = oversample(imgs_train, imgs_mask_train, imgs_names_train, num_classes)
 
     #model is unet
-    #model = unet()
+    #model = unet(num_classes)
     #model dilated convolutions
     model = get_frontend(imageDim,imageDim, num_classes)
 
-    #adding softmax is giving me a problem with the layers!!!!!
-    #model = add_softmax(model)
 
     if os.path.exists(init_weights_path):
         model.load_weights(init_weights_path)
 
-    optimizer = Adam(lr=base_lr, decay=decay_lr)
+    #Optimal weighting per class (binary cross entropy)
+    class_weight[1] = np.size(imgs_mask_train)/np.sum(imgs_mask_train)
+    class_weight[0] = np.size(imgs_mask_train)/(np.size(imgs_mask_train) - np.sum(imgs_mask_train)) 
+
+    optimizer = Adam(lr=base_lr)#, decay=decay_lr)
     model.compile(optimizer=optimizer,
-                  #loss='binary_crossentropy',
-                  #metrics=['accuracy', dice_coef])
+                  #loss=create_weighted_binary_crossentropy(class_weight),
+                  #metrics=['acc', dice_coef])
 		  loss=dice_coef_loss,
                   metrics=[dice_coef])
 
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
+    save_model = ModelCheckpoint(filepath="weights_singleLabel1_dilation_dice_1_{epoch:03d}.h5", period=50)
     training_log = TensorBoard(log_dir=log_path)
 
     model.fit(imgs_train, imgs_mask_train,
@@ -87,12 +108,12 @@ def train():
               batch_size=batch_size,
               epochs=epochs,
               shuffle=True,
-              callbacks=[training_log])
+              callbacks=[training_log, save_model])
 
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_singleLabel1_reduceModel_1_{}.h5'.format(epochs)))
+        weights_path, 'weights_singleLabel1_dilation_dice_1_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':

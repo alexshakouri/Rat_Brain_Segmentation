@@ -92,17 +92,3 @@ def get_frontend(input_width, input_height, num_classes) -> Sequential:
     return model
 
 
-def add_softmax(model: Sequential) -> Sequential:
-    """ Append the softmax layers to the frontend or frontend + context net. """
-    # The softmax layer doesn't work on the (width, height, channel)
-    # shape, so we reshape to (width*height, channel) first.
-    # https://github.com/fchollet/keras/issues/1169
-    _, curr_width, curr_height, curr_channels = model.layers[-1].output_shape
-
-    model.add(Reshape((curr_width * curr_height, curr_channels)))
-    model.add(Activation('softmax'))
-    # Technically, we need another Reshape here to reshape to 2d, but TF
-    # the complains when batch_size > 1. We're just going to reshape in numpy.
-    # model.add(Reshape((curr_width, curr_height, curr_channels)))
-
-    return model

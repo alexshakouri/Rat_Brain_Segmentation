@@ -77,8 +77,10 @@ def load_data(path, num_classes):
             #PUT IN THE REAL THING HERE THIS DOESN"T WORK
             for c in range(num_classes):
                 split_masks[:,:,c] = (img_mask == np.round((c+1)*255/14))
+            #pdb.set_trace()
         else:
             split_masks[:,:,0] = (img_mask == np.round(region_mask*255/14))
+            #split_masks[:,:,0] = img_mask/255.
 
         # make the shapes line up have (1,256,256) want (256,256,1)
         img = np.squeeze(img)
@@ -90,10 +92,10 @@ def load_data(path, num_classes):
         i += 1
 
     images = images.astype('float32')
-    if (num_classes == 1):
-        masks = masks[..., np.newaxis]
-    
-    masks = masks.astype('float32')
+    #if (num_classes == 1):
+    #    masks = masks[..., np.newaxis]
+    #Save space 
+    masks = masks.astype('int32')
 
 
     return images, masks, names
@@ -114,7 +116,7 @@ def oversample(images, masks, imgs_names_train, num_classes):
     images_o = []
     masks_o = []
     print(images.shape)
-
+    print(masks.shape)
     
     
     #I also want to oversample the D03 images by 2
@@ -123,17 +125,18 @@ def oversample(images, masks, imgs_names_train, num_classes):
         if np.max(masks[i]) < 1:   
             continue
 
-        for _ in range(2):
+        #DO extra data here!
+        for _ in range(1):
             images_o.append(images[i])
             masks_o.append(masks[i])
 
-        if i in tempNamesIndex:
-            for _ in range(2):
-                images_o.append(images[i])
-                masks_o.append(masks[i])
+        #if i in tempNamesIndex:
+        #    for _ in range(2):
+        #        images_o.append(images[i])
+        #        masks_o.append(masks[i])
 
     images_o = np.array(images_o)
-    masks_o = np.array(masks_o)
+    masks_o = np.array(masks_o)  #This is a problem as I can't convert huge list into numpy array
 
     #Data Augmentation for the images
     datagen = ImageDataGenerator(rotation_range = 10)
@@ -143,16 +146,15 @@ def oversample(images, masks, imgs_names_train, num_classes):
     numImages = images_o.shape[0]    
     ImageNum = 0
 
-    print(images_o.shape)
     for x_batch, y_batch in datagen.flow(images_o, masks_o, batch_size = numImages):
         images_Aug.append(x_batch)
         masks_Aug.append(y_batch)
         break 
 
-    
-   
-    images_Aug = np.reshape(np.array(images_Aug), images_o.shape)
-    masks_Aug = np.reshape(np.array(masks_Aug), masks_o.shape)
+    images_Aug = images_Aug[0]
+    masks_Aug = masks_Aug[0]
+    #images_Aug = np.reshape(np.array(images_Aug), images_o.shape)
+    #masks_Aug = np.reshape(np.array(masks_Aug), masks_o.shape)
 
     #images_Aug = np.squeeze(images_Aug)
     #images_Aug = images_Aug[:,:,:,None]
@@ -165,7 +167,6 @@ def oversample(images, masks, imgs_names_train, num_classes):
     #save images just to see! looks fine!
     #for i in range(len(images_Aug)):
     #    mplimg.imsave(os.path.join('./test', str(i) + '.png'), np.squeeze(images_Aug[i]))
-
 
     return np.vstack((images, images_Aug)), np.vstack((masks, masks_Aug))
 

@@ -16,11 +16,13 @@ from data import image_cols
 from data import image_rows
 from data import modalities
 
-batch_norm = False
+batch_norm = True
 smooth = 1.0
 
 
 def dice_coef(y_true, y_pred):
+    #Check for multiple regions
+    
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     #fixed matrix multiply with elementwise mutliplication
@@ -31,7 +33,30 @@ def dice_coef_loss(y_true, y_pred):
     return -dice_coef(y_true, y_pred)
 
 
-def unet():
+def create_dice_coef(num_classes):
+    #Check for multiple regions
+    if num_classes == 1:
+        def dice_coef_single(y_true, y_pred):
+            y_true_f = K.flatten(y_true)
+            y_pred_f = K.flatten(y_pred)
+            #fixed matrix multiply with elementwise mutliplication
+            intersection = K.sum(np.multiply(y_true_f, y_pred_f))
+            return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+        return dice_coef_single
+    else:
+        def dice_coef_multi(y_true, y_pred):
+            return 0
+        return dice_coef_multi
+
+
+
+def dice_coef_loss(y_true, y_pred):
+    return -dice_coef(y_true, y_pred)
+
+
+
+
+def unet(num_classes):
     inputs = Input((image_rows, image_cols, channels * modalities))
 
     conv1 = Conv2D(32, (3, 3), padding='same')(inputs)
@@ -144,7 +169,11 @@ def unet():
         conv9 = BatchNormalization(axis=3)(conv9)
     conv9 = Activation('relu')(conv9)
 
-    conv10 = Conv2D(1, (1, 1), activation='sigmoid')(conv9)
+    if (num_classes == 1):
+        conv10 = Conv2D(1, (1, 1), activation='softmax')(conv9)
+    else:
+        conv10 = Conv2D(num_classes, (1, 1), activation='sigmoid')(conv9)
+
 
     model = Model(inputs=[inputs], outputs=[conv10])
 
