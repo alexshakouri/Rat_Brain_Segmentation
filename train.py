@@ -20,16 +20,25 @@ from net import unet
 from model_dilation import get_frontend
 import pdb
 
-train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
-valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
+
+train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128'
+valid_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128'
+init_weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_unet_whaaaa.h5'
+weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/'
+log_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/logs/multiLabel1_unet_test'
 
 
-#train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
-#valid_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/dataVal_128/'
 
-init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
-weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
-log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/singleLabel1_dilation_dice_1'
+#train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
+#valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
+
+
+##train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
+##valid_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/dataVal_128/'
+
+#init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
+#weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
+#log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/singleLabel1_dilation_dice_1'
 
 
 
@@ -38,7 +47,7 @@ cross_val = True
 gpu = '0'
 
 epochs = 128
-batch_size = 15
+batch_size = 32
 base_lr = 1e-6
 decay_lr = 0.00 # ADAM optimizer doesn't need decay as the base_lr is a max for it. 
 imageDim = 128
@@ -78,9 +87,9 @@ def train():
     imgs_train, imgs_mask_train = oversample(imgs_train, imgs_mask_train, imgs_names_train, num_classes)
 
     #model is unet
-    #model = unet(num_classes)
+    model = unet(num_classes)
     #model dilated convolutions
-    model = get_frontend(imageDim,imageDim, num_classes)
+    #model = get_frontend(imageDim,imageDim, num_classes)
 
 
     if os.path.exists(init_weights_path):
@@ -100,7 +109,7 @@ def train():
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    save_model = ModelCheckpoint(filepath="weights_singleLabel1_dilation_dice_1_{epoch:03d}.h5", period=50)
+    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_test_{epoch:03d}.h5"), period=50)
     training_log = TensorBoard(log_dir=log_path)
 
     model.fit(imgs_train, imgs_mask_train,
@@ -113,7 +122,7 @@ def train():
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_singleLabel1_dilation_dice_1_{}.h5'.format(epochs)))
+        weights_path, 'weights_multilabl_unet_test_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':
