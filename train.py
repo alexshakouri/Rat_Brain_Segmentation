@@ -11,6 +11,7 @@ from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from keras.callbacks import TensorBoard
 from keras.optimizers import Adam
+from keras.preprocessing.image import ImageDataGenerator
 
 from data import load_data
 from data import oversample
@@ -21,24 +22,24 @@ from model_dilation import get_frontend
 import pdb
 
 
-train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128'
-valid_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128'
-init_weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_unet_whaaaa.h5'
-weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/'
-log_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/logs/multiLabel1_unet_test'
+#train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128'
+#valid_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128'
+#init_weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_unet_whaaaa.h5'
+#weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/'
+#log_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/logs/multiLabel1_unet_test'
 
 
 
-#train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
-#valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
+train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
+valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
 
 
-##train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
-##valid_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/dataVal_128/'
+#train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
+#valid_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/dataVal_128/'
 
-#init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
-#weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
-#log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/singleLabel1_dilation_dice_1'
+init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
+weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
+log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_test_5'
 
 
 
@@ -46,13 +47,25 @@ cross_val = True
 
 gpu = '0'
 
-epochs = 128
+epochs = 300
 batch_size = 32
-base_lr = 1e-6
+base_lr = 2e-5
 decay_lr = 0.00 # ADAM optimizer doesn't need decay as the base_lr is a max for it. 
 imageDim = 128
-num_classes = 1
+num_classes = 14
 class_weight = [1,1]
+
+def Train_datagen(datagen1, datagen2):
+    
+    while True:
+        image1 = datagen1.next()
+        image2 = datagen2.next()
+        
+        #combine the two
+        imageCombine = np.concatenate((image1[0], image2[0]), axis=0)
+        maskCombine =  np.concatenate((image1[1], image2[1]), axis=0)
+
+        yield imageCombine, maskCombine
 
 def create_weighted_binary_crossentropy(class_weight):
     def weighted_binary_crossentropy(y_true, y_pred):
@@ -84,8 +97,7 @@ def train():
     imgs_valid -= mean
     imgs_valid /= std
 
-    imgs_train, imgs_mask_train = oversample(imgs_train, imgs_mask_train, imgs_names_train, num_classes)
-
+    #imgs_train, imgs_mask_train = oversample(imgs_train, imgs_mask_train, imgs_names_train, num_classes)
     #model is unet
     model = unet(num_classes)
     #model dilated convolutions
@@ -109,20 +121,36 @@ def train():
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_test_{epoch:03d}.h5"), period=50)
+    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_test_5_{epoch:03d}.h5"), period=50)
     training_log = TensorBoard(log_dir=log_path)
 
-    model.fit(imgs_train, imgs_mask_train,
+    #Data Augmentation
+    datagen = ImageDataGenerator(rotation_range = 10)
+    datagen_flow = datagen.flow(imgs_train, imgs_mask_train, batch_size=16)
+    datagen2 = ImageDataGenerator(rotation_range = 0)
+    datagen2_flow = datagen2.flow(imgs_train, imgs_mask_train, batch_size=32)
+    
+    #model.fit(imgs_train, imgs_mask_train,
+    #          validation_data=(imgs_valid, imgs_mask_valid),
+    #          batch_size=batch_size,
+    #          epochs=epochs,
+    #          shuffle=True,
+    #          callbacks=[training_log, save_model])
+    #THIS DOESN"T WORK I NEED TO CREATE MY OWN GENERATOR
+
+    model.fit_generator(datagen2_flow,
               validation_data=(imgs_valid, imgs_mask_valid),
-              batch_size=batch_size,
+              steps_per_epoch = len(imgs_train)//batch_size,
               epochs=epochs,
               shuffle=True,
               callbacks=[training_log, save_model])
 
+
+
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_multilabl_unet_test_{}.h5'.format(epochs)))
+        weights_path, 'weights_multilabel_unet_test_5_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':

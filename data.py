@@ -44,7 +44,7 @@ def load_data(path, num_classes):
 
     #This needs to be u because if it is a string then it will be bytes!!
     names = np.empty(total_count, dtype= '|U64')   
-
+    
     #choose the region 
     region_mask = 5
 
@@ -94,7 +94,7 @@ def load_data(path, num_classes):
     images = images.astype('float32')
     #if (num_classes == 1):
     #    masks = masks[..., np.newaxis]
-    #Save space 
+    #Save space
     masks = masks.astype('int32')
 
 
@@ -135,24 +135,24 @@ def oversample(images, masks, imgs_names_train, num_classes):
         #        images_o.append(images[i])
         #        masks_o.append(masks[i])
 
-    images_o = np.array(images_o)
-    masks_o = np.array(masks_o)  #This is a problem as I can't convert huge list into numpy array
-
+    #images_o = np.array(images_o)
+    #masks_o = np.array(masks_o)  #This is a problem as I can't convert huge list into numpy array
+    
     #Data Augmentation for the images
-    datagen = ImageDataGenerator(rotation_range = 10)
+    #datagen = ImageDataGenerator(rotation_range = 10)
 
-    images_Aug = []
-    masks_Aug = []
-    numImages = images_o.shape[0]    
-    ImageNum = 0
+    #images_Aug = []
+    #masks_Aug = []
+  
+    #numImages = np.shape(images_o)[0]    
+    #ImageNum = 0
+    #for x_batch, y_batch in datagen.flow(images_o, masks_o, batch_size = numImages):
+    #    images_Aug.append(x_batch)
+    #    masks_Aug.append(y_batch)
+    #    break 
 
-    for x_batch, y_batch in datagen.flow(images_o, masks_o, batch_size = numImages):
-        images_Aug.append(x_batch)
-        masks_Aug.append(y_batch)
-        break 
-
-    images_Aug = images_Aug[0]
-    masks_Aug = masks_Aug[0]
+    #images_Aug = images_Aug[0]
+    #masks_Aug = masks_Aug[0]
     #images_Aug = np.reshape(np.array(images_Aug), images_o.shape)
     #masks_Aug = np.reshape(np.array(masks_Aug), masks_o.shape)
 
@@ -168,7 +168,8 @@ def oversample(images, masks, imgs_names_train, num_classes):
     #for i in range(len(images_Aug)):
     #    mplimg.imsave(os.path.join('./test', str(i) + '.png'), np.squeeze(images_Aug[i]))
 
-    return np.vstack((images, images_Aug)), np.vstack((masks, masks_Aug))
+    pdb.set_trace()
+    return np.vstack((images, images_o)), np.vstack((masks, masks_o))
 
 
 
