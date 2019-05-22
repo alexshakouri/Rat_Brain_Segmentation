@@ -74,10 +74,8 @@ def load_data(path, num_classes):
 
         #do one image for every class (single class choose a mask num)
         if(num_classes > 1):
-            #PUT IN THE REAL THING HERE THIS DOESN"T WORK
             for c in range(num_classes):
                 split_masks[:,:,c] = (img_mask == np.round((c+1)*255/14))
-            #pdb.set_trace()
         else:
             split_masks[:,:,0] = (img_mask == np.round(region_mask*255/14))
             #split_masks[:,:,0] = img_mask/255.

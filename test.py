@@ -8,6 +8,7 @@ import numpy as np
 import os
 import sys
 import tensorflow as tf
+import random
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -30,18 +31,20 @@ import pdb
 #predictions_path = './predictions/dilation_reducelr_test2'
 
 #Path for laptop
-weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_singleLabel1_1_128.h5'
+weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_dilation_test_1_100.h5'
 train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128/'
 test_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
-predictions_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/predictions/weights_singleLabel_1/'
+predictions_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/predictions/weights_multiLabel_dilation_test_1_100/'
 
-num_classes = 1
+num_classes = 14
 
 imSize = 128
 
 gpu = '0'
 
-region_mask = 5
+random.seed(1)
+class_colors = [ ( random.randint(0,255),random.randint(0,255),random.randint(0,255) ) for _ in range(num_classes) ]
+
 
 def predict(mean=0.0, std=1.0):
     # load and normalize data
@@ -61,7 +64,7 @@ def predict(mean=0.0, std=1.0):
     imgs_test /= std
 
     # load model with weights
-    #model = unet()
+    #model = unet(num_classes)
     model = get_frontend(imSize,imSize, num_classes)
     model.load_weights(weights_path)
 
@@ -71,6 +74,12 @@ def predict(mean=0.0, std=1.0):
     if not os.path.exists(predictions_path):
         os.mkdir(predictions_path)
 
+    #look at the values of the model
+    inp = model.input
+    outputs = [layer.output for layer in model.layers]   
+    functors = [K.function([inp], [out]) for out in outputs] 
+    layer_output = functors[0]([imgs_test])
+
     matdict = {
         'pred': imgs_mask_pred,
         'image': original_imgs_test,
@@ -78,7 +87,7 @@ def predict(mean=0.0, std=1.0):
         'name': names_test
     }
     savemat(os.path.join(predictions_path, 'predictions.mat'), matdict)
-
+    
     # save images with segmentation and ground truth mask overlay
     for i in range(len(imgs_test)):
         pred = imgs_mask_pred[i]
@@ -91,28 +100,41 @@ def predict(mean=0.0, std=1.0):
         image_rgb = gray2rgb(image[:, :, 0])
 
         # prediction contour image (add all the predictions)
-        pred = (np.round(np.sum(pred[:, :, :], axis=2)) * 255.0).astype(np.uint8)
-        pred, contours, _ = cv2.findContours(
-            pred, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        pred = np.zeros(pred.shape)
-        cv2.drawContours(pred, contours, -1, (255, 0, 0), 1)
-
+        pred = (np.round(pred) * 255.0).astype(np.uint8)
         # ground truth contour image (add all the masks)
-        mask = (np.round(np.sum(mask[:, :, :], axis=2)) * 255.0).astype(np.uint8)
-        mask, contours, _ = cv2.findContours(
-            mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        mask = np.zeros(mask.shape)
-        cv2.drawContours(mask, contours, -1, (255, 0, 0), 1)
-
+        mask = (np.round(mask) * 255.0).astype(np.uint8)
+                
         # combine image with contours using red for pred and blue for mask
         pred_rgb = np.array(image_rgb)
         annotation = pred_rgb[:, :, 1]
-        #HERE IS THE PROBLEM
         
-        annotation[np.maximum(pred, mask[:,:,0]) == 255] = 0
+        #Set all the pixels with the annotation to zero and fill it in with the color
+        for c in range(num_classes):
+            pred_temp = pred[:,:,c]            
+            mask_temp = mask[:,:,c]
+
+            pred_temp, contours, _ = cv2.findContours(
+                pred_temp.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            pred_temp = np.zeros(pred_temp.shape)
+            cv2.drawContours(pred_temp, contours, -1, (255, 0, 0), 1)
+
+            mask_temp, contours, _ = cv2.findContours(
+                mask_temp.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+            mask_temp = np.zeros(mask_temp.shape)
+            cv2.drawContours(mask_temp, contours, -1, (255, 0, 0), 1)
+  
+            pred[:,:,c] = pred_temp
+            mask[:,:,c] = mask_temp
+
+            annotation[np.maximum(pred[:,:,c], mask[:,:,c]) == 255] = 0
+        
         pred_rgb[:, :, 0] = pred_rgb[:, :, 1] = pred_rgb[:, :, 2] = annotation
-        pred_rgb[:, :, 2] = np.maximum(pred_rgb[:, :, 2], mask[:,:,0])
-        pred_rgb[:, :, 0] = np.maximum(pred_rgb[:, :, 0], pred)
+
+        for c in range(num_classes):
+            pred_rgb[:, :, 2] = np.maximum(pred_rgb[:, :, 2], mask[:,:,c])
+            pred_rgb[: ,: ,1] = np.maximum(pred_rgb[: ,: ,1], (pred[:,:,c]/255)* class_colors[c][1]) 
+            pred_rgb[:, :, 2] = np.maximum(pred_rgb[:, :, 2], (pred[:,:,c]/255)* class_colors[c][2])
+            pred_rgb[:, :, 0] = np.maximum(pred_rgb[:, :, 0], (pred[:,:,c]/255)* class_colors[c][0])
 
         imsave(os.path.join(predictions_path,
                             names_test[i] + '.png'), pred_rgb)
