@@ -1,6 +1,9 @@
-from keras.layers import Activation, Reshape, Dropout
-from keras.layers import AtrousConvolution2D, Conv2D, MaxPooling2D, ZeroPadding2D, Conv2DTranspose
-from keras.models import Sequential
+from keras.layers import Activation, Reshape, Dropout, Input, BatchNormalization, concatenate
+from keras.layers import AtrousConvolution2D, Conv2D, MaxPooling2D, ZeroPadding2D, Conv2DTranspose, UpSampling2D
+from keras.models import Sequential, Model
+from data import modalities
+from data import channels
+from net import batch_norm
 
 
 #
@@ -91,4 +94,107 @@ def get_frontend(input_width, input_height, num_classes) -> Sequential:
 
     return model
 
+# CITYSCAPES MODEL
+def get_dilation_model_unet(image_rows, image_cols, num_classes):
+    inputs = Input((image_rows, image_cols, channels * modalities))
 
+    conv1 = Conv2D(32, (3, 3), padding='same')(inputs)
+    if batch_norm:
+        conv1 = BatchNormalization(axis=3)(conv1)
+    conv1 = Activation('relu')(conv1)
+
+    conv1 = Conv2D(32, (3, 3), padding='same')(conv1)
+    if batch_norm:
+        conv1 = BatchNormalization(axis=3)(conv1)
+    conv1 = Activation('relu')(conv1)
+
+    pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+
+    conv2 = Conv2D(64, (3, 3), padding='same')(pool1)
+    if batch_norm:
+        conv2 = BatchNormalization(axis=3)(conv2)
+    conv2 = Activation('relu')(conv2)
+
+    conv2 = Conv2D(64, (3, 3), padding='same')(conv2)
+    if batch_norm:
+        conv2 = BatchNormalization(axis=3)(conv2)
+    conv2 = Activation('relu')(conv2)
+
+    pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+
+    #conv3 = Conv2D(128, (3, 3), padding='same')(pool2)
+    #if batch_norm:
+    #    conv3 = BatchNormalization(axis=3)(conv3)
+    #conv3 = Activation('relu')(conv3)
+
+    #conv3 = Conv2D(128, (3, 3), padding='same')(conv3)
+    #if batch_norm:
+    #    conv3 = BatchNormalization(axis=3)(conv3)
+    #conv3 = Activation('relu')(conv3)
+
+    #pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+
+    #dilated convolutions
+    pad1 = ZeroPadding2D((1, 1))(pool2)
+    conv_dil_1 = Conv2D(256, (3, 3), activation='relu', name='ct_conv1_1')(pad1)
+    pad2 = ZeroPadding2D((1, 1))(conv_dil_1)
+    conv_dil_2 = Conv2D(256, (3, 3), activation='relu', name='ct_conv1_2')(pad2)
+    pad3 = ZeroPadding2D((2, 2))(conv_dil_2)
+    conv_dil_3 = Conv2D(512, (3, 3), dilation_rate=(2, 2), activation='relu', name='ct_conv2_1')(pad3)
+    pad4 = ZeroPadding2D((4, 4))(conv_dil_3)
+    conv_dil_4 = Conv2D(512, (3, 3), dilation_rate=(4, 4), activation='relu', name='ct_conv3_1')(pad4)
+    pad5 = ZeroPadding2D((8, 8))(conv_dil_4)
+    conv_dil_5 = Conv2D(512, (3, 3), dilation_rate=(8, 8), activation='relu', name='ct_conv4_1')(pad5)
+    pad6 = ZeroPadding2D((16, 16))(conv_dil_5)
+    conv_dil_6 = Conv2D(512, (3, 3), dilation_rate=(16, 16), activation='relu', name='ct_conv5_1')(pad6)
+
+    #up7 = Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(conv_dil_6)
+    #up7 = concatenate([up7, conv3], axis=3)
+
+    #conv7 = Conv2D(128, (3, 3), padding='same')(up7)
+    #if batch_norm:
+    #    conv7 = BatchNormalization(axis=3)(conv7)
+    #conv7 = Activation('relu')(conv7)
+
+    #conv7 = Conv2D(128, (3, 3), activation='relu', padding='same')(conv7)
+    #if batch_norm:
+    #    conv7 = BatchNormalization(axis=3)(conv7)
+    #conv7 = Activation('relu')(conv7)
+
+    up8 = Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(conv_dil_6)
+    up8 = concatenate([up8, conv2], axis=3)
+
+    conv8 = Conv2D(64, (3, 3), padding='same')(up8)
+    if batch_norm:
+        conv8 = BatchNormalization(axis=3)(conv8)
+    conv8 = Activation('relu')(conv8)
+
+    conv8 = Conv2D(64, (3, 3), padding='same')(conv8)
+    if batch_norm:
+        conv8 = BatchNormalization(axis=3)(conv8)
+    conv8 = Activation('relu')(conv8)
+
+    up9 = Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(conv8)
+    up9 = concatenate([up9, conv1], axis=3)
+
+    conv9 = Conv2D(32, (3, 3), padding='same')(up9)
+    if batch_norm:
+        conv9 = BatchNormalization(axis=3)(conv9)
+    conv9 = Activation('relu')(conv9)
+
+    conv9 = Conv2D(32, (3, 3), padding='same')(conv9)
+    if batch_norm:
+        conv9 = BatchNormalization(axis=3)(conv9)
+    conv9 = Activation('relu')(conv9)
+
+    if (num_classes == 1):
+        conv10 = Conv2D(1, (1, 1), activation='softmax')(conv9)
+    else:
+        conv10 = Conv2D(num_classes, (1, 1), activation='sigmoid')(conv9)
+
+
+    model = Model(inputs=[inputs], outputs=[conv10])
+
+    model.summary()
+   
+    return model

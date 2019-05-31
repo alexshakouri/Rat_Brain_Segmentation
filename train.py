@@ -19,6 +19,7 @@ from net import dice_coef
 from net import dice_coef_loss
 from net import unet
 from model_dilation import get_frontend
+from model_dilation import get_dilation_model_unet
 import pdb
 
 
@@ -30,8 +31,8 @@ import pdb
 
 
 
-train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
-valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
+train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128_2/'
+valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128_2/'
 
 
 #train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
@@ -39,7 +40,7 @@ valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
 
 init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
 weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
-log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_test_5'
+log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_dil_2'
 
 
 
@@ -99,9 +100,10 @@ def train():
 
     #imgs_train, imgs_mask_train = oversample(imgs_train, imgs_mask_train, imgs_names_train, num_classes)
     #model is unet
-    model = unet(num_classes)
+    #model = unet(num_classes)
     #model dilated convolutions
     #model = get_frontend(imageDim,imageDim, num_classes)
+    model = get_dilation_model_unet(imageDim,imageDim, num_classes)
 
 
     if os.path.exists(init_weights_path):
@@ -113,22 +115,26 @@ def train():
 
     optimizer = Adam(lr=base_lr)#, decay=decay_lr)
     model.compile(optimizer=optimizer,
-                  #loss=create_weighted_binary_crossentropy(class_weight),
-                  #metrics=['acc', dice_coef])
+                  #loss='categorical_crossentropy',
+                  #metrics=['accuracy', dice_coef])
 		  loss=dice_coef_loss,
                   metrics=[dice_coef])
 
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_test_5_{epoch:03d}.h5"), period=50)
+    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_dil_2_{epoch:03d}.h5"), period=50)
     training_log = TensorBoard(log_dir=log_path)
 
     #Data Augmentation
-    datagen = ImageDataGenerator(rotation_range = 10)
-    datagen_flow = datagen.flow(imgs_train, imgs_mask_train, batch_size=16)
+    datagen = ImageDataGenerator(rotation_range = 10,
+            horizontal_flip=True,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            brightness_range=[0.7,1])
+    datagen_flow = datagen.flow(imgs_train, imgs_mask_train, batch_size=8)
     datagen2 = ImageDataGenerator(rotation_range = 0)
-    datagen2_flow = datagen2.flow(imgs_train, imgs_mask_train, batch_size=32)
+    datagen2_flow = datagen2.flow(imgs_train, imgs_mask_train, batch_size=8)
     
     #model.fit(imgs_train, imgs_mask_train,
     #          validation_data=(imgs_valid, imgs_mask_valid),
@@ -138,9 +144,9 @@ def train():
     #          callbacks=[training_log, save_model])
     #THIS DOESN"T WORK I NEED TO CREATE MY OWN GENERATOR
 
-    model.fit_generator(datagen2_flow,
+    model.fit_generator(Train_datagen(datagen_flow, datagen2_flow),
               validation_data=(imgs_valid, imgs_mask_valid),
-              steps_per_epoch = len(imgs_train)//batch_size,
+              steps_per_epoch = (len(imgs_train)*2)//batch_size,
               epochs=epochs,
               shuffle=True,
               callbacks=[training_log, save_model])
@@ -150,7 +156,7 @@ def train():
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_multilabel_unet_test_5_{}.h5'.format(epochs)))
+        weights_path, 'weights_multiLabel_unet_dil_2_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':

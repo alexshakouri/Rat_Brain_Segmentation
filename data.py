@@ -96,7 +96,8 @@ def load_data(path, num_classes):
     #    masks = masks[..., np.newaxis]
     #Save space
     masks = masks.astype('int32')
-
+    print(images.shape)
+    print(masks.shape)
 
     return images, masks, names
 
@@ -115,10 +116,7 @@ def oversample(images, masks, imgs_names_train, num_classes):
     """
     images_o = []
     masks_o = []
-    print(images.shape)
-    print(masks.shape)
-    
-    
+        
     #I also want to oversample the D03 images by 2
     tempNamesIndex = np.flatnonzero(np.core.defchararray.find(imgs_names_train,'D03')!=-1)   
     for i in range(len(masks)):

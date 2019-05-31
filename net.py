@@ -172,7 +172,7 @@ def unet(num_classes):
     if (num_classes == 1):
         conv10 = Conv2D(1, (1, 1), activation='softmax')(conv9)
     else:
-        conv10 = Conv2D(num_classes, (1, 1), activation='sigmoid')(conv9)
+        conv10 = Conv2D(num_classes, (1, 1), activation='softmax')(conv9)
 
 
     model = Model(inputs=[inputs], outputs=[conv10])
