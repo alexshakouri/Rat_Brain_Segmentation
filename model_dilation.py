@@ -121,21 +121,22 @@ def get_dilation_model_unet(image_rows, image_cols, num_classes):
     conv2 = Activation('relu')(conv2)
 
     pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+    ##
+    conv3 = Conv2D(128, (3, 3), padding='same')(pool2)
+    if batch_norm:
+        conv3 = BatchNormalization(axis=3)(conv3)
+    conv3 = Activation('relu')(conv3)
 
-    #conv3 = Conv2D(128, (3, 3), padding='same')(pool2)
-    #if batch_norm:
-    #    conv3 = BatchNormalization(axis=3)(conv3)
-    #conv3 = Activation('relu')(conv3)
+    conv3 = Conv2D(128, (3, 3), padding='same')(conv3)
+    if batch_norm:
+        conv3 = BatchNormalization(axis=3)(conv3)
+    conv3 = Activation('relu')(conv3)
 
-    #conv3 = Conv2D(128, (3, 3), padding='same')(conv3)
-    #if batch_norm:
-    #    conv3 = BatchNormalization(axis=3)(conv3)
-    #conv3 = Activation('relu')(conv3)
-
-    #pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+    pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+    ##
 
     #dilated convolutions
-    pad1 = ZeroPadding2D((1, 1))(pool2)
+    pad1 = ZeroPadding2D((1, 1))(pool3)
     conv_dil_1 = Conv2D(256, (3, 3), activation='relu', name='ct_conv1_1')(pad1)
     pad2 = ZeroPadding2D((1, 1))(conv_dil_1)
     conv_dil_2 = Conv2D(256, (3, 3), activation='relu', name='ct_conv1_2')(pad2)
@@ -148,20 +149,22 @@ def get_dilation_model_unet(image_rows, image_cols, num_classes):
     pad6 = ZeroPadding2D((16, 16))(conv_dil_5)
     conv_dil_6 = Conv2D(512, (3, 3), dilation_rate=(16, 16), activation='relu', name='ct_conv5_1')(pad6)
 
-    #up7 = Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(conv_dil_6)
-    #up7 = concatenate([up7, conv3], axis=3)
+    ##
+    up7 = Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(conv_dil_6)
+    up7 = concatenate([up7, conv3], axis=3)
 
-    #conv7 = Conv2D(128, (3, 3), padding='same')(up7)
-    #if batch_norm:
-    #    conv7 = BatchNormalization(axis=3)(conv7)
-    #conv7 = Activation('relu')(conv7)
+    conv7 = Conv2D(128, (3, 3), padding='same')(up7)
+    if batch_norm:
+        conv7 = BatchNormalization(axis=3)(conv7)
+    conv7 = Activation('relu')(conv7)
 
-    #conv7 = Conv2D(128, (3, 3), activation='relu', padding='same')(conv7)
-    #if batch_norm:
-    #    conv7 = BatchNormalization(axis=3)(conv7)
-    #conv7 = Activation('relu')(conv7)
-
-    up8 = Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(conv_dil_6)
+    conv7 = Conv2D(128, (3, 3), activation='relu', padding='same')(conv7)
+    if batch_norm:
+        conv7 = BatchNormalization(axis=3)(conv7)
+    conv7 = Activation('relu')(conv7)
+    ##
+ 
+    up8 = Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(conv7)
     up8 = concatenate([up8, conv2], axis=3)
 
     conv8 = Conv2D(64, (3, 3), padding='same')(up8)
