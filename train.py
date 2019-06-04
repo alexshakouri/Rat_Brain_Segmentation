@@ -30,7 +30,7 @@ import pdb
 #log_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/logs/multiLabel1_unet_test'
 
 
-
+# dataAll_128_2 is the Veh01 in training and Veh02 in test
 train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128_2/'
 valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128_2/'
 
@@ -40,7 +40,7 @@ valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128_2/'
 
 init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
 weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
-log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_dil_2'
+log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_dil_3'
 
 
 
@@ -48,7 +48,7 @@ cross_val = True
 
 gpu = '0'
 
-epochs = 300
+epochs = 400
 batch_size = 32
 base_lr = 2e-5
 decay_lr = 0.00 # ADAM optimizer doesn't need decay as the base_lr is a max for it. 
@@ -123,7 +123,7 @@ def train():
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_dil_2_{epoch:03d}.h5"), period=50)
+    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_dil_3_{epoch:03d}.h5"), period=50)
     training_log = TensorBoard(log_dir=log_path)
 
     #Data Augmentation
@@ -132,9 +132,9 @@ def train():
             width_shift_range=0.2,
             height_shift_range=0.2,
             brightness_range=[0.7,1])
-    datagen_flow = datagen.flow(imgs_train, imgs_mask_train, batch_size=8)
+    datagen_flow = datagen.flow(imgs_train, imgs_mask_train, batch_size=16)
     datagen2 = ImageDataGenerator(rotation_range = 0)
-    datagen2_flow = datagen2.flow(imgs_train, imgs_mask_train, batch_size=8)
+    datagen2_flow = datagen2.flow(imgs_train, imgs_mask_train, batch_size=16)
     
     #model.fit(imgs_train, imgs_mask_train,
     #          validation_data=(imgs_valid, imgs_mask_valid),
@@ -156,7 +156,7 @@ def train():
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_multiLabel_unet_dil_2_{}.h5'.format(epochs)))
+        weights_path, 'weights_multiLabel_unet_dil_3_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':
