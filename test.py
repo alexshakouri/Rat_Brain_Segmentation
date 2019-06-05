@@ -13,14 +13,17 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from keras import backend as K
+#from keras.utils import plot_model #Need libraries graphviz 
 from scipy.io import savemat
 from skimage.io import imsave
 
 from data import load_data
 from net import unet
 from net import dice_coef
+from net import ZF_UNET_224
 
 from model_dilation import get_frontend
+from model_dilation import get_dilation_model_unet
 
 import pdb
 
@@ -31,10 +34,10 @@ import pdb
 #predictions_path = './predictions/dilation_reducelr_test2'
 
 #Path for laptop
-weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_dilation_test_1_100.h5'
+weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/zf_unet_224.h5'
 train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128/'
 test_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
-predictions_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/predictions/weights_multiLabel_dilation_test_1_100/'
+predictions_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/predictions/pretrained_unet/'
 
 num_classes = 14
 
@@ -64,9 +67,15 @@ def predict(mean=0.0, std=1.0):
     imgs_test /= std
 
     # load model with weights
-    #model = unet(num_classes)
-    model = get_frontend(imSize,imSize, num_classes)
+    model = unet(num_classes)
+    #model = get_frontend(imSize,imSize, num_classes)
+    #model = get_dilation_model_unet(imSize,imSize, num_classes)   
+    model = ZF_UNET_224(num_classes)
+
     model.load_weights(weights_path)
+
+    #plot the model
+    #plot_model(model, to_file = os.path.join(predictions_path, 'model_plot.png'))
 
     # make predictions
     imgs_mask_pred = model.predict(imgs_test, verbose=1)

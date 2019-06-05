@@ -18,7 +18,7 @@ import matplotlib.image as mplimg
 image_rows = 128
 image_cols = 128
 
-channels = 1    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
+channels = 3    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
 modalities = 1  # refers to pre, flair and post modalities; if set to 3, uses all and if set to 1, only flair
 
 
@@ -82,7 +82,8 @@ def load_data(path, num_classes):
 
         # make the shapes line up have (1,256,256) want (256,256,1)
         img = np.squeeze(img)
-        img = img[:,:,None]
+        if len(img.shape) == 2:
+            img = img[:,:,None]
 
         images[i] = img
         masks[i] = split_masks
