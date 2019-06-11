@@ -40,7 +40,7 @@ valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128_2/'
 
 init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
 weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
-log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_dil_3'
+log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_dil_3_test'
 
 
 
@@ -123,7 +123,7 @@ def train():
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_dil_3_{epoch:03d}.h5"), period=50)
+    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_dil_3_test_{epoch:03d}.h5"), period=50)
     training_log = TensorBoard(log_dir=log_path)
 
     #Data Augmentation
@@ -156,7 +156,7 @@ def train():
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_multiLabel_unet_dil_3_{}.h5'.format(epochs)))
+        weights_path, 'weights_multiLabel_unet_dil_3_te_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':
