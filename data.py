@@ -12,6 +12,7 @@ from skimage.transform import rotate
 
 import keras
 from keras.preprocessing.image import ImageDataGenerator
+from keras.utils import to_categorical
 
 import matplotlib.image as mplimg
 
@@ -20,6 +21,7 @@ image_cols = 128
 
 channels = 3    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
 modalities = 1  # refers to pre, flair and post modalities; if set to 3, uses all and if set to 1, only flair
+categorical = True
 
 
 def load_data(path, num_classes):
@@ -74,8 +76,14 @@ def load_data(path, num_classes):
 
         #do one image for every class (single class choose a mask num)
         if(num_classes > 1):
-            for c in range(num_classes):
-                split_masks[:,:,c] = (img_mask == np.round((c+1)*255/14))
+            if (categorical):
+                img_mask_int = np.squeeze(np.round(img_mask/255*14).astype(int))
+                split_masks = to_categorical(img_mask_int, num_classes=num_classes+1)
+                split_masks = split_masks[:,:,1:(num_classes+1)] #don't need to predict the zero class
+
+            else:
+                for c in range(num_classes):
+                    split_masks[:,:,c] = (img_mask == np.round((c+1)*255/14))
         else:
             split_masks[:,:,0] = (img_mask == np.round(region_mask*255/14))
             #split_masks[:,:,0] = img_mask/255.

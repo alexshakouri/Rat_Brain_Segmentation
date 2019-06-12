@@ -40,7 +40,7 @@ valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128_2/'
 
 init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
 weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
-log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_dil_3_test'
+log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_cat_2'
 
 
 
@@ -100,10 +100,10 @@ def train():
 
     #imgs_train, imgs_mask_train = oversample(imgs_train, imgs_mask_train, imgs_names_train, num_classes)
     #model is unet
-    #model = unet(num_classes)
+    model = unet(num_classes)
     #model dilated convolutions
     #model = get_frontend(imageDim,imageDim, num_classes)
-    model = get_dilation_model_unet(imageDim,imageDim, num_classes)
+    #model = get_dilation_model_unet(imageDim,imageDim, num_classes)
 
 
     if os.path.exists(init_weights_path):
@@ -115,15 +115,15 @@ def train():
 
     optimizer = Adam(lr=base_lr)#, decay=decay_lr)
     model.compile(optimizer=optimizer,
-                  #loss='categorical_crossentropy',
-                  #metrics=['accuracy', dice_coef])
-		  loss=dice_coef_loss,
-                  metrics=[dice_coef])
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy', dice_coef])
+		  #loss=dice_coef_loss,
+                  #metrics=[dice_coef])
 
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_dil_3_test_{epoch:03d}.h5"), period=50)
+    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_cat_2_{epoch:03d}.h5"), period=50)
     training_log = TensorBoard(log_dir=log_path)
 
     #Data Augmentation
@@ -156,7 +156,7 @@ def train():
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_multiLabel_unet_dil_3_te_{}.h5'.format(epochs)))
+        weights_path, 'weights_multiLabel_unet_cat_2_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':
