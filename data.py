@@ -21,7 +21,7 @@ image_cols = 128
 
 channels = 3    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
 modalities = 1  # refers to pre, flair and post modalities; if set to 3, uses all and if set to 1, only flair
-categorical = True
+categorical = False
 
 
 def load_data(path, num_classes):
@@ -39,7 +39,7 @@ def load_data(path, num_classes):
             np.chararray: array of corresponding images' filenames without extensions
     """
     images_list = os.listdir(path)
-    total_count = int(len(images_list) / 2)
+    total_count = int(len(images_list) / 2) #one for mask and one for the image
     images = np.ndarray((total_count, image_rows, image_cols, channels * modalities), dtype=np.uint8)
     masks = np.ndarray((total_count, image_rows, image_cols, num_classes), dtype=np.uint8)
     split_masks = np.ndarray((image_rows, image_cols, num_classes), dtype=np.uint8)
@@ -48,7 +48,7 @@ def load_data(path, num_classes):
     names = np.empty(total_count, dtype= '|U64')   
     
     #choose the region 
-    region_mask = 5
+    region_mask = 1
 
     i = 0
     for image_name in images_list:
@@ -79,7 +79,7 @@ def load_data(path, num_classes):
             if (categorical):
                 img_mask_int = np.squeeze(np.round(img_mask/255*14).astype(int))
                 split_masks = to_categorical(img_mask_int, num_classes=num_classes+1)
-                split_masks = split_masks[:,:,1:(num_classes+1)] #don't need to predict the zero class
+                #split_masks = split_masks[:,:,1:(num_classes+1)] #don't need to predict the zero class
 
             else:
                 for c in range(num_classes):

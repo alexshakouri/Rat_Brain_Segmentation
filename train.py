@@ -31,8 +31,8 @@ import pdb
 
 
 # dataAll_128_2 is the Veh01 in training and Veh02 in test
-train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128_2/'
-valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128_2/'
+train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
+valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
 
 
 #train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
@@ -40,7 +40,7 @@ valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128_2/'
 
 init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
 weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
-log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/multiLabel1_unet_cat_2'
+log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/test'
 
 
 
@@ -48,12 +48,12 @@ cross_val = True
 
 gpu = '0'
 
-epochs = 400
+epochs = 150
 batch_size = 32
 base_lr = 2e-5
 decay_lr = 0.00 # ADAM optimizer doesn't need decay as the base_lr is a max for it. 
 imageDim = 128
-num_classes = 14
+num_classes = 1 # categorical +1 what we say for background pixels
 class_weight = [1,1]
 
 def Train_datagen(datagen1, datagen2):
@@ -115,15 +115,15 @@ def train():
 
     optimizer = Adam(lr=base_lr)#, decay=decay_lr)
     model.compile(optimizer=optimizer,
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy', dice_coef])
-		  #loss=dice_coef_loss,
-                  #metrics=[dice_coef])
+                  #loss='categorical_crossentropy',
+                  #metrics=['accuracy', dice_coef])
+		  loss=dice_coef_loss,
+                  metrics=[dice_coef])
 
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_multiLabel_unet_cat_2_{epoch:03d}.h5"), period=50)
+    save_model = ModelCheckpoint(filepath=os.path.join(weights_path, "weights_test_{epoch:03d}.h5"), period=50)
     training_log = TensorBoard(log_dir=log_path)
 
     #Data Augmentation
@@ -144,6 +144,8 @@ def train():
     #          callbacks=[training_log, save_model])
     #THIS DOESN"T WORK I NEED TO CREATE MY OWN GENERATOR
 
+
+    #need the len(imgs)*2 because I data augment it to twice as many
     model.fit_generator(Train_datagen(datagen_flow, datagen2_flow),
               validation_data=(imgs_valid, imgs_mask_valid),
               steps_per_epoch = (len(imgs_train)*2)//batch_size,
@@ -156,7 +158,7 @@ def train():
     if not os.path.exists(weights_path):
         os.mkdir(weights_path)
     model.save_weights(os.path.join(
-        weights_path, 'weights_multiLabel_unet_cat_2_{}.h5'.format(epochs)))
+        weights_path, 'weights_test_1_{}.h5'.format(epochs)))
 
 
 if __name__ == '__main__':
