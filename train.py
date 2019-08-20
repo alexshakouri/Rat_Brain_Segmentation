@@ -14,20 +14,12 @@ from keras.optimizers import Adam
 from keras.preprocessing.image import ImageDataGenerator
 
 from data import load_data
-from data import oversample
 from net import dice_coef
 from net import dice_coef_loss
 from net import unet
 from model_dilation import get_frontend
 from model_dilation import get_dilation_model_unet
 import pdb
-
-
-#train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128'
-#valid_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128'
-#init_weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_unet_whaaaa.h5'
-#weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/'
-#log_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/logs/multiLabel1_unet_test'
 
 
 # dataAll_128_2 is the Veh01 in training and Veh02 in test
@@ -43,18 +35,13 @@ weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
 log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/test'
 
 
-
-cross_val = True
-
 gpu = '0'
 
-epochs = 150
+epochs = 1
 batch_size = 32
 base_lr = 2e-5
-decay_lr = 0.00 # ADAM optimizer doesn't need decay as the base_lr is a max for it. 
 imageDim = 128
-num_classes = 1 # categorical +1 what we say for background pixels
-class_weight = [1,1]
+num_classes = 1 # categorical loss +1 class for background pixels
 
 def Train_datagen(datagen1, datagen2):
     
@@ -67,22 +54,6 @@ def Train_datagen(datagen1, datagen2):
         maskCombine =  np.concatenate((image1[1], image2[1]), axis=0)
 
         yield imageCombine, maskCombine
-
-def create_weighted_binary_crossentropy(class_weight):
-    def weighted_binary_crossentropy(y_true, y_pred):
-
-        # Original binary crossentropy (see losses.py):
-        # K.mean(K.binary_crossentropy(y_true, y_pred), axis=-1)
-
-        # Calculate the binary crossentropy
-        b_ce = K.binary_crossentropy(y_true, y_pred)
-
-        # Apply the weights
-        weight_vector = y_true * class_weight[1] + (1. - y_true) * class_weight[0]
-        weighted_b_ce = weight_vector * b_ce
-        # Return the mean error
-        return K.mean(weighted_b_ce)
-    return weighted_binary_crossentropy
 
 def train():
     imgs_train, imgs_mask_train, imgs_names_train = load_data(train_images_path, num_classes)
@@ -98,8 +69,7 @@ def train():
     imgs_valid -= mean
     imgs_valid /= std
 
-    #imgs_train, imgs_mask_train = oversample(imgs_train, imgs_mask_train, imgs_names_train, num_classes)
-    #model is unet
+    #define the model
     model = unet(num_classes)
     #model dilated convolutions
     #model = get_frontend(imageDim,imageDim, num_classes)
@@ -109,11 +79,7 @@ def train():
     if os.path.exists(init_weights_path):
         model.load_weights(init_weights_path)
 
-    #Optimal weighting per class (binary cross entropy)
-    class_weight[1] = np.size(imgs_mask_train)/np.sum(imgs_mask_train)
-    class_weight[0] = np.size(imgs_mask_train)/(np.size(imgs_mask_train) - np.sum(imgs_mask_train)) 
-
-    optimizer = Adam(lr=base_lr)#, decay=decay_lr)
+    optimizer = Adam(lr=base_lr)
     model.compile(optimizer=optimizer,
                   #loss='categorical_crossentropy',
                   #metrics=['accuracy', dice_coef])
@@ -132,19 +98,10 @@ def train():
             width_shift_range=0.2,
             height_shift_range=0.2,
             brightness_range=[0.7,1])
-    datagen_flow = datagen.flow(imgs_train, imgs_mask_train, batch_size=16)
+    datagen_flow = datagen.flow(imgs_train, imgs_mask_train, batch_size=batch_size//2)
     datagen2 = ImageDataGenerator(rotation_range = 0)
-    datagen2_flow = datagen2.flow(imgs_train, imgs_mask_train, batch_size=16)
+    datagen2_flow = datagen2.flow(imgs_train, imgs_mask_train, batch_size=batch_size//2)
     
-    #model.fit(imgs_train, imgs_mask_train,
-    #          validation_data=(imgs_valid, imgs_mask_valid),
-    #          batch_size=batch_size,
-    #          epochs=epochs,
-    #          shuffle=True,
-    #          callbacks=[training_log, save_model])
-    #THIS DOESN"T WORK I NEED TO CREATE MY OWN GENERATOR
-
-
     #need the len(imgs)*2 because I data augment it to twice as many
     model.fit_generator(Train_datagen(datagen_flow, datagen2_flow),
               validation_data=(imgs_valid, imgs_mask_valid),
