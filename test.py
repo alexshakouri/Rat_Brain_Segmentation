@@ -35,7 +35,7 @@ import pdb
 #Path for laptop
 weights_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_unet_dil_1_300.h5'
 train_images_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/data/dataAll_128/'
-test_images_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
+test_images_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/data/dataAllVal_128_testIMG/'
 predictions_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/predictions/weights_singleLabel1_matlabtest/'
 
 num_classes = 14
@@ -101,7 +101,6 @@ def predict(mean=0.0, std=1.0):
         mask = imgs_mask_test[i]
 
         # segmentation mask is for the middle slice
-        #print(image.shape)
         image_rgb = gray2rgb(image[:, :, 0])
 
         # prediction contour image (add all the predictions)
@@ -212,6 +211,10 @@ def plot_dc(labels, values):
     plt.savefig('DSC.png', bbox_inches='tight')
     plt.close(fig)
 
+def post_process(imgs_mask):
+   return 0
+
+
 
 if __name__ == '__main__':
 
@@ -226,6 +229,10 @@ if __name__ == '__main__':
 
     #with tf.device(device):
     imgs_mask_test, imgs_mask_pred, names_test = predict()
+
+    imgs_mask_post = post_process(imgs_mask_pred)
+
+    pdb.set_trace()
 
     values, labels = evaluate(imgs_mask_test, imgs_mask_pred, names_test)
 

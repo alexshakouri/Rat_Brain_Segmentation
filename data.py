@@ -19,7 +19,7 @@ import matplotlib.image as mplimg
 image_rows = 128
 image_cols = 128
 
-channels = 3    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
+channels = 1    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
 modalities = 1  # refers to pre, flair and post modalities; if set to 3, uses all and if set to 1, only flair
 categorical = False
 
