@@ -21,7 +21,7 @@ image_cols = 128
 
 channels = 3    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
 modalities = 1  # refers to pre, flair and post modalities; if set to 3, uses all and if set to 1, only flair
-categorical = True
+categorical = False
 
 
 def load_data(path, num_classes):
@@ -39,7 +39,7 @@ def load_data(path, num_classes):
             np.chararray: array of corresponding images' filenames without extensions
     """
     images_list = os.listdir(path)
-    total_count = int(len(images_list) / 2)
+    total_count = int(len(images_list) / 2) #one for mask and one for the image
     images = np.ndarray((total_count, image_rows, image_cols, channels * modalities), dtype=np.uint8)
     masks = np.ndarray((total_count, image_rows, image_cols, num_classes), dtype=np.uint8)
     split_masks = np.ndarray((image_rows, image_cols, num_classes), dtype=np.uint8)
@@ -48,7 +48,7 @@ def load_data(path, num_classes):
     names = np.empty(total_count, dtype= '|U64')   
     
     #choose the region 
-    region_mask = 5
+    region_mask = 1
 
     i = 0
     for image_name in images_list:
@@ -79,7 +79,6 @@ def load_data(path, num_classes):
             if (categorical):
                 img_mask_int = np.squeeze(np.round(img_mask/255*14).astype(int))
                 split_masks = to_categorical(img_mask_int, num_classes=num_classes+1)
-                split_masks = split_masks[:,:,1:(num_classes+1)] #don't need to predict the zero class
 
             else:
                 for c in range(num_classes):
@@ -99,83 +98,12 @@ def load_data(path, num_classes):
         i += 1
 
     images = images.astype('float32')
-    #if (num_classes == 1):
-    #    masks = masks[..., np.newaxis]
     #Save space
     masks = masks.astype('int32')
     print(images.shape)
     print(masks.shape)
 
     return images, masks, names
-
-
-def oversample(images, masks, imgs_names_train, num_classes):
-    """
-    Repeats 2 times every slice with nonzero mask
-
-        Args:
-            np.ndarray: array of images
-            np.ndarray: array of masks
-
-        Returns:
-            np.ndarray: array of oversampled images
-            np.ndarray: array of oversampled masks
-    """
-    images_o = []
-    masks_o = []
-        
-    #I also want to oversample the D03 images by 2
-    tempNamesIndex = np.flatnonzero(np.core.defchararray.find(imgs_names_train,'D03')!=-1)   
-    for i in range(len(masks)):
-        if np.max(masks[i]) < 1:   
-            continue
-
-        #DO extra data here!
-        for _ in range(1):
-            images_o.append(images[i])
-            masks_o.append(masks[i])
-
-        #if i in tempNamesIndex:
-        #    for _ in range(2):
-        #        images_o.append(images[i])
-        #        masks_o.append(masks[i])
-
-    #images_o = np.array(images_o)
-    #masks_o = np.array(masks_o)  #This is a problem as I can't convert huge list into numpy array
-    
-    #Data Augmentation for the images
-    #datagen = ImageDataGenerator(rotation_range = 10)
-
-    #images_Aug = []
-    #masks_Aug = []
-  
-    #numImages = np.shape(images_o)[0]    
-    #ImageNum = 0
-    #for x_batch, y_batch in datagen.flow(images_o, masks_o, batch_size = numImages):
-    #    images_Aug.append(x_batch)
-    #    masks_Aug.append(y_batch)
-    #    break 
-
-    #images_Aug = images_Aug[0]
-    #masks_Aug = masks_Aug[0]
-    #images_Aug = np.reshape(np.array(images_Aug), images_o.shape)
-    #masks_Aug = np.reshape(np.array(masks_Aug), masks_o.shape)
-
-    #images_Aug = np.squeeze(images_Aug)
-    #images_Aug = images_Aug[:,:,:,None]
-
-    #masks_Aug = np.squeeze(masks_Aug)
-    
-    #if (num_classes == 1):
-    #    masks_Aug = masks_Aug[:,:,:,None] #need the fourth for the num_classes
-
-    #save images just to see! looks fine!
-    #for i in range(len(images_Aug)):
-    #    mplimg.imsave(os.path.join('./test', str(i) + '.png'), np.squeeze(images_Aug[i]))
-
-    pdb.set_trace()
-    return np.vstack((images, images_o)), np.vstack((masks, masks_o))
-
 
 
 def read_slice(path, patient_id, slice):

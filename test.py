@@ -20,7 +20,6 @@ from skimage.io import imsave
 from data import load_data
 from net import unet
 from net import dice_coef
-from net import ZF_UNET_224
 
 from model_dilation import get_frontend
 from model_dilation import get_dilation_model_unet
@@ -34,10 +33,10 @@ import pdb
 #predictions_path = './predictions/dilation_reducelr_test2'
 
 #Path for laptop
-weights_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/zf_unet_224.h5'
-train_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAll_128/'
-test_images_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
-predictions_path = '/media/alexshakouri/TOURO Mobile USB3.02/Research/Code/brain-segmentation-master/predictions/pretrained_unet/'
+weights_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_unet_dil_1_300.h5'
+train_images_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/data/dataAll_128/'
+test_images_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/data/dataAllVal_128/'
+predictions_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/predictions/weights_singleLabel1_matlabtest/'
 
 num_classes = 14
 
@@ -67,15 +66,12 @@ def predict(mean=0.0, std=1.0):
     imgs_test /= std
 
     # load model with weights
-    model = unet(num_classes)
+    #model = unet(num_classes)
     #model = get_frontend(imSize,imSize, num_classes)
+    model = get_dilation_model_unet(imSize,imSize, num_classes)   
     #model = get_dilation_model_unet(imSize,imSize, num_classes)   
-    model = ZF_UNET_224(num_classes)
 
     model.load_weights(weights_path)
-
-    #plot the model
-    #plot_model(model, to_file = os.path.join(predictions_path, 'model_plot.png'))
 
     # make predictions
     imgs_mask_pred = model.predict(imgs_test, verbose=1)
@@ -147,6 +143,8 @@ def predict(mean=0.0, std=1.0):
 
         imsave(os.path.join(predictions_path,
                             names_test[i] + '.png'), pred_rgb)
+
+        #Undo the cropping 
 
     return imgs_mask_test, imgs_mask_pred, names_test
 
@@ -226,13 +224,8 @@ if __name__ == '__main__':
         gpu = sys.argv[1]
     device = '/gpu:' + gpu
 
-    #Don't have GPU working!!!!!
     #with tf.device(device):
     imgs_mask_test, imgs_mask_pred, names_test = predict()
-
-    #check the net
-    #checkDice = dice_coef(imgs_mask_pred, imgs_mask_test)
-    #`print('Dice Coeff: ' + str(sess.run(checkDice)))
 
     values, labels = evaluate(imgs_mask_test, imgs_mask_pred, names_test)
 
