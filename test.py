@@ -5,6 +5,7 @@ matplotlib.use('Agg')
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from collections import defaultdict
 import os
 import sys
 import tensorflow as tf
@@ -211,8 +212,25 @@ def plot_dc(labels, values):
     plt.savefig('DSC.png', bbox_inches='tight')
     plt.close(fig)
 
-def post_process(imgs_mask):
-   return 0
+def post_process(imgs_mask, names_mask):
+    #Step1: combine all the individual masks (128x128x14 to 128x128x1)
+    #np.max as some of the pixel predictions overlap (this puts a higher weight on the later regions)
+    imgs_mask_group = np.max(np.round(imgs_mask) * (np.arange(imgs_mask.shape[-1]) + 1),3) #CHECK FOR 1 REGION
+    #step2: group the images into their own groups (total 12 groups)
+    #assume the names are formatted: animalID_SliceNumber
+    uniqNames = defaultdict(list)
+    for i in range(len(imgs_mask)):
+        #seperate slice number from the animalID
+        animalID = names_mask[i].split('_')[0]
+        uniqNames[animalID].append(i)
+        
+
+    pdb.set_trace()
+    #step3: sort the 44 images from 1-44 (from the names)
+
+    #step4: do the interpolation and padding to make the image 280x200x44 
+
+    return 0
 
 
 
@@ -230,7 +248,7 @@ if __name__ == '__main__':
     #with tf.device(device):
     imgs_mask_test, imgs_mask_pred, names_test = predict()
 
-    imgs_mask_post = post_process(imgs_mask_pred)
+    imgs_mask_post = post_process(imgs_mask_pred, names_test)
 
     pdb.set_trace()
 
