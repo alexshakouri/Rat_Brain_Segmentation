@@ -16,7 +16,9 @@ warnings.filterwarnings('ignore')
 from keras import backend as K
 #from keras.utils import plot_model #Need libraries graphviz 
 from scipy.io import savemat
+#from scipy.misc import imresize
 from skimage.io import imsave
+from skimage.transform import resize
 
 from data import load_data
 from net import unet
@@ -42,6 +44,9 @@ predictions_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain
 num_classes = 14
 
 imSize = 128
+
+output_rows = 280
+output_cols = 200
 
 gpu = '0'
 
@@ -144,8 +149,6 @@ def predict(mean=0.0, std=1.0):
         imsave(os.path.join(predictions_path,
                             names_test[i] + '.png'), pred_rgb)
 
-        #Undo the cropping 
-
     return imgs_mask_test, imgs_mask_pred, names_test
 
 def evaluate(imgs_mask_test, imgs_mask_pred, names_test):
@@ -219,15 +222,43 @@ def post_process(imgs_mask, names_mask):
     #step2: group the images into their own groups (total 12 groups)
     #assume the names are formatted: animalID_SliceNumber
     uniqNames = defaultdict(list)
+    animalSliceNum = np.zeros(len(imgs_mask))
     for i in range(len(imgs_mask)):
         #seperate slice number from the animalID
         animalID = names_mask[i].split('_')[0]
         uniqNames[animalID].append(i)
+
+        animalSliceNum[i] = names_mask[i].split('_')[1]
         
 
-    pdb.set_trace()
     #step3: sort the 44 images from 1-44 (from the names)
+    for IDIter, imIter in uniqNames.items():
+        #print(IDIter, ':', imIter)
+        namesID = names_mask[imIter]
+        imgs_ID_mask = imgs_mask_group[imIter]
+        namesSliceNum = animalSliceNum[imIter]
 
+        sortSliceNum = np.argsort(namesSliceNum) #THE SORT IS WRONG
+
+        sortNamesID = namesID[sortSliceNum]
+        sort_imgs_mask = imgs_ID_mask[sortSliceNum]
+
+        #Reverse the image processing
+        #output is 280x200x44
+        min_length = min(output_rows, output_cols)
+        max_length = max(output_rows, output_cols) 
+
+        zeroPad = (np.ceil(((max_length*(imSize/min_length)) - imSize)/2)).astype(int)
+
+        imgs_pad_mask = np.pad(imgs_ID_mask, ((0,0),(zeroPad,zeroPad),(0,0)), 'constant')
+        imgs_post_mask = resize(imgs_pad_mask, (imgs_ID_mask.shape[0], output_rows, output_cols)).astype(np.int32)
+        
+        imsave(os.path.join(predictions_path, IDIter + '.tif'), imgs_post_mask)
+
+ 
+        pdb.set_trace()
+
+    #pdb.set_trace()
     #step4: do the interpolation and padding to make the image 280x200x44 
 
     return 0
