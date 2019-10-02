@@ -85,12 +85,6 @@ def predict(mean=0.0, std=1.0):
     if not os.path.exists(predictions_path):
         os.mkdir(predictions_path)
 
-    #look at the values of the model
-    inp = model.input
-    outputs = [layer.output for layer in model.layers]   
-    functors = [K.function([inp], [out]) for out in outputs] 
-    layer_output = functors[0]([imgs_test])
-
     matdict = {
         'pred': imgs_mask_pred,
         'image': original_imgs_test,
@@ -241,7 +235,7 @@ def post_process(imgs_mask, names_mask):
         sortSliceNum = np.argsort(namesSliceNum) #THE SORT IS WRONG
 
         sortNamesID = namesID[sortSliceNum]
-        sort_imgs_mask = imgs_ID_mask[sortSliceNum]
+        sort_imgs_mask = imgs_ID_mask[sortSliceNum, :, :]
 
         #Reverse the image processing
         #output is 280x200x44
@@ -250,13 +244,10 @@ def post_process(imgs_mask, names_mask):
 
         zeroPad = (np.ceil(((max_length*(imSize/min_length)) - imSize)/2)).astype(int)
 
-        imgs_pad_mask = np.pad(imgs_ID_mask, ((0,0),(zeroPad,zeroPad),(0,0)), 'constant')
+        imgs_pad_mask = np.pad(sort_imgs_mask, ((0,0),(zeroPad,zeroPad),(0,0)), 'constant')
         imgs_post_mask = resize(imgs_pad_mask, (imgs_ID_mask.shape[0], output_rows, output_cols)).astype(np.int32)
         
         imsave(os.path.join(predictions_path, IDIter + '.tif'), imgs_post_mask)
-
- 
-        pdb.set_trace()
 
     #pdb.set_trace()
     #step4: do the interpolation and padding to make the image 280x200x44 
@@ -280,8 +271,6 @@ if __name__ == '__main__':
     imgs_mask_test, imgs_mask_pred, names_test = predict()
 
     imgs_mask_post = post_process(imgs_mask_pred, names_test)
-
-    pdb.set_trace()
 
     values, labels = evaluate(imgs_mask_test, imgs_mask_pred, names_test)
 
