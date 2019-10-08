@@ -22,7 +22,7 @@ image_cols = 128
 channels = 1    # refers to neighboring slices; if set to 3, takes previous and next slice as additional channels
 modalities = 1  # refers to pre, flair and post modalities; if set to 3, uses all and if set to 1, only flair
 categorical = False
-
+region_mask = 1 #If the num_classes=1 then choose the region you want segmented (only if theinput images have more than one region)
 
 def load_data(path, num_classes):
     """
@@ -44,11 +44,10 @@ def load_data(path, num_classes):
     masks = np.ndarray((total_count, image_rows, image_cols, num_classes), dtype=np.uint8)
     split_masks = np.ndarray((image_rows, image_cols, num_classes), dtype=np.uint8)
 
-    #This needs to be u because if it is a string then it will be bytes!!
+    #This needs to be U64 because if it is a string then it will be bytes!
     names = np.empty(total_count, dtype= '|U64')   
     
-    #choose the region 
-    region_mask = 1
+
 
     i = 0
     for image_name in images_list:
@@ -100,8 +99,6 @@ def load_data(path, num_classes):
     images = images.astype('float32')
     #Save space
     masks = masks.astype('int32')
-    print(images.shape)
-    print(masks.shape)
 
     return images, masks, names
 

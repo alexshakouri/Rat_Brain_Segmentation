@@ -25,17 +25,13 @@ import pdb
 train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
 valid_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
 
-
-#train_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/data_128/'
-#valid_images_path = '/home/ashakour/MRI_segmentation/flair-segmentation/dataVal_128/'
-
 init_weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/weights_dilation_128_WHAT.h5'
 weights_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/'
 log_path = '/home/ashakour/MRI_segmentation/Rat_Brain_Sementation/results/logs/test'
 
 gpu = '0'
 
-epochs = 1
+epochs = 300
 batch_size = 32
 base_lr = 2e-5
 imageDim = 128

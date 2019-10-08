@@ -14,9 +14,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from keras import backend as K
-#from keras.utils import plot_model #Need libraries graphviz 
 from scipy.io import savemat
-#from scipy.misc import imresize
 from skimage.io import imsave
 from skimage.transform import resize
 
@@ -29,13 +27,6 @@ from model_dilation import get_dilation_model_unet
 
 import pdb
 
-#Path for server
-#weights_path = 'results/weights_multi-label_dice_2_128.h5'
-#train_images_path = '/home/ashakour/MRI_segmentation/data/dataAll_128/'
-#test_images_path = '/home/ashakour/MRI_segmentation/data/dataAllVal_128/'
-#predictions_path = './predictions/dilation_reducelr_test2'
-
-#Path for laptop
 weights_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/Rat_Brain_Sementation/results/weights_multiLabel_unet_dil_1_300.h5'
 train_images_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/data/dataAll_128/'
 test_images_path = '/media/alexshakouri/TOURO Mobile USB3.03/Research/Code/brain-segmentation-master/data/dataAllVal_128_testIMG/'
@@ -49,6 +40,7 @@ output_rows = 280
 output_cols = 200
 
 gpu = '0'
+
 
 random.seed(1)
 class_colors = [ ( random.randint(0,255),random.randint(0,255),random.randint(0,255) ) for _ in range(num_classes) ]
@@ -72,10 +64,9 @@ def predict(mean=0.0, std=1.0):
     imgs_test /= std
 
     # load model with weights
-    #model = unet(num_classes)
-    #model = get_frontend(imSize,imSize, num_classes)
-    model = get_dilation_model_unet(imSize,imSize, num_classes)   
-    #model = get_dilation_model_unet(imSize,imSize, num_classes)   
+    #model = unet(num_classes) #Unet model
+    #model = get_frontend(imSize,imSize, num_classes) #Dilation model
+    model = get_dilation_model_unet(imSize,imSize, num_classes) #combination model
 
     model.load_weights(weights_path)
 
@@ -212,7 +203,7 @@ def plot_dc(labels, values):
 def post_process(imgs_mask, names_mask):
     #Step1: combine all the individual masks (128x128x14 to 128x128x1)
     #np.max as some of the pixel predictions overlap (this puts a higher weight on the later regions)
-    imgs_mask_group = np.max(np.round(imgs_mask) * (np.arange(imgs_mask.shape[-1]) + 1),3) #CHECK FOR 1 REGION
+    imgs_mask_group = np.max(np.round(imgs_mask) * (np.arange(imgs_mask.shape[-1]) + 1),3)
     #step2: group the images into their own groups (total 12 groups)
     #assume the names are formatted: animalID_SliceNumber
     uniqNames = defaultdict(list)
@@ -225,14 +216,13 @@ def post_process(imgs_mask, names_mask):
         animalSliceNum[i] = names_mask[i].split('_')[1]
         
 
-    #step3: sort the 44 images from 1-44 (from the names)
+    #step3: sort the 44 images from 1-44 (from the names) and save the output
     for IDIter, imIter in uniqNames.items():
-        #print(IDIter, ':', imIter)
         namesID = names_mask[imIter]
         imgs_ID_mask = imgs_mask_group[imIter]
         namesSliceNum = animalSliceNum[imIter]
 
-        sortSliceNum = np.argsort(namesSliceNum) #THE SORT IS WRONG
+        sortSliceNum = np.argsort(namesSliceNum)
 
         sortNamesID = namesID[sortSliceNum]
         sort_imgs_mask = imgs_ID_mask[sortSliceNum, :, :]
@@ -248,9 +238,6 @@ def post_process(imgs_mask, names_mask):
         imgs_post_mask = resize(imgs_pad_mask, (imgs_ID_mask.shape[0], output_rows, output_cols)).astype(np.int32)
         
         imsave(os.path.join(predictions_path, IDIter + '.tif'), imgs_post_mask)
-
-    #pdb.set_trace()
-    #step4: do the interpolation and padding to make the image 280x200x44 
 
     return 0
 
