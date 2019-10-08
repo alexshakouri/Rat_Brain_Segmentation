@@ -1,5 +1,7 @@
 
 %% Read in the image and the mask
+%Read every day for each of the animal names listed in name. The code can
+%only go one animal type at a time as that is how the data is formatted.
 
 day = ['D03'; 'D07'; 'D28'];
 
@@ -23,6 +25,8 @@ name = ['Veh01 R14-192'; 'Veh02 R14-200'];
 for indexName = 1:size(name,1)
 for indexDay = 1:size(day,1)
 %Read in the nifty image as img
+%Assume here that the images are in the format like in the DIBS image
+%dataset
 tempFileName = ['E:\Research\DIBS 3-28 Imaging Data\Image Data\VEH\' name(indexName,:) '\' name(indexName, 7:end) ' ' day(indexDay,:) ' T2w.img'];
 if exist(tempFileName, 'file') == 0
     disp(['skipping: ', tempFileName])
@@ -34,7 +38,6 @@ Iimg = fread(imageRaw, 'single', 'ieee-be');
 Zimg = reshape(Iimg, 280,200,44);
 %Have to roate it 180 degrees about z
 Zimg = imrotate(Zimg,180);
-%Zimg = imresize(Zimg, 0.25);
 
 %Read in the nifty mask as raw (VALUES CORRECT/Spaceing CORRECT) 
 tempFileName2 = ['E:\Research\DIBS 3-28 Imaging Data\Image Data\VEH\' name(indexName,:) '\outputPMOD\' name(indexName, 7:end) '-' day(indexDay,:) '-voi\' name(indexName, 7:end) '-' day(indexDay,:) '-voi.nii'];
@@ -47,46 +50,28 @@ I = fread(imageRaw, 'bit24');
 %skip the first 348 bytes (header file)
 Inew = I(119:end);
 Zmask = reshape(Inew, 280,200,44);
-%Zmask = imresize(Zmask, 0.25);
 
- %only keep certain label 
- %Zmask(Zmask ~= 1) = 0;
+ %only keep one certain label 
+ %label = 1;
+ %Zmask(Zmask ~= label) = 0;
  %normalize
- %Zmask(Zmask == 1) = 1;
+ %Zmask(Zmask == label) = 1;
 
-% %Plot the segmented image
-% figure;
-% imagesc(Zmask(:,:,26)' .* Zimg(:,:,26)')
-% colorbar
 
 %% Preprocess the image/mask
 case_id = [ name(indexName,:) '-' day(indexDay,:)];
 
-
-
 [slices, mask] = preprocessing3D(Zimg, Zmask);
 
-figure;
-imhist(slices(:))
-
-% %Plot the segmented image
-% figure;
-% imagesc(slices(:,:,26)')
-% colorbar
-% 
-%  figure;
-%  imagesc(mask(:,:,26)')
-%  colorbar
 options.color = true;
 
 for s = size(mask, 3):-1:1
     %One modality
     image = slices(:,:,s);
     
+    %Specify the output image filename
     imwrite(image,  ['E:\Research\Code\brain-segmentation-master\data\dataAllVal_128_testIMG\' case_id '_' num2str(s) '.tif']);
-    %%saveastiff(image, ['dataAll_128/' case_id '_' num2str(s) '.tif']);
     imwrite(mask(:, :, s),['E:\Research\Code\brain-segmentation-master\data\dataAllVal_128_testIMG\' case_id '_' num2str(s) '_mask.tif']);
-    %%saveastiff(mask(:, :, s), ['dataAll_128/' case_id '_' num2str(s) '_mask.tif'], options);   
 end
 
 %Multi-modality

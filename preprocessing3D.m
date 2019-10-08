@@ -14,24 +14,6 @@ function [ slices, mask ] = preprocessing3D( slices, mask )
 %
 %       [slices, mask] = preprocessing3D(slices, zeros(size(slices)));
 %
-%   Saving combined preprocessed slices from 3 modalities:
-%
-%       rootPath = '/media/username/data/train/';
-%       case_id = 'patient_001';
-%       [pre, mask] = preprocessing3D(pre, mask);
-%       [flair, ~] = preprocessing3D(pre, mask);
-%       [post, ~] = preprocessing3D(pre, mask);
-%       options.color = true;    
-%       for s = size(mask, 3):-1:1
-%           preModality = pre(:, :, s);
-%           flairModality = flair(:, :, s:);
-%           postModality = post(:, :, s);
-% 
-%           image = cat(3, preModality, flairModality, postModality);
-% 
-%           saveastiff(image, [rootPath case_id '_' num2str(s) '.tif'], options);
-%           saveastiff(mask(:, :, s), [rootPath case_id '_' num2str(s) '_mask.tif']);
-%       end
 
     %make sure that the max in mask is 1 and then rest is below it (divide
     %by 255 to keep it 1-14 in the uint8 and by max(max(max(mask))) to
@@ -61,19 +43,18 @@ function [ slices, mask ] = preprocessing3D( slices, mask )
     % get histogram of an image volume
     [N, edges] = histcounts(slices(:), 'BinWidth', 2);
 
-    % rescale the intensity peak to be at value 100
-    minimum = 0; %prctile(slices(slices ~= 0), 3);
+    % rescale the intensity peak
+    minimum = 0;
     
     start = find(edges >= minimum, 1);
     [~, ind] = max(N(start:end));
     peak_val = edges(ind + start - 1);
-    maximum = minimum + max(slices(:)); %((peak_val - minimum)* 20); %2.55);
+    maximum = minimum + max(slices(:)); %((peak_val - minimum)* 20); % This value makes the images look brighter
 
     slices(slices < minimum) = minimum;
     slices(slices > maximum) = maximum;
     slices = (slices - minimum) ./ (maximum - minimum);
-    disp(peak_val)
-    disp(max(slices(:)))
+    
     % preprocessed images
     slices = im2uint8(slices);
     mask = im2uint8(mask);
