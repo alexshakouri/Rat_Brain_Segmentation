@@ -1,5 +1,5 @@
 # Rat_Brain_Sementation
-Masters Thesis on machine learning methods concering automatic segmentation of rat brain MRI images.
+Machine learning methods concering automatic segmentation of rat brain MRI images.
 
 ## Required software
 ```
@@ -22,7 +22,9 @@ DFP01 R14-189 D03 T2w.hdr
 ```
 ## Output
 The final output of this model is a segmentation mask of the input images with 14 different brain regions segmented
-
+```
+DFP 01 R14-189_D03.tif
+```
 ## Running the software
 ### Preprocess the images
 1. Run the Unetpreprocess.m with the corresponding image folders specified
@@ -75,10 +77,11 @@ net.py
 ```
 
 ### Test the model
-2. Run test.py (make sure that the parameters that used for training is the same for the testing (data.py, model_dilation.py))
+2. Run test.py 
+Important Note: make sure that the parameters that used for training is the same for the testing (data.py, model_dilation.py)
 ```
 input: 2D .tif image slices you want tested and .h5 weights file
-output: 2D segmentation mask of the predictions of the model
+output: 3D .tif segmentation mask of the predictions of the model 
 ```
 #### Parameters
 ```
