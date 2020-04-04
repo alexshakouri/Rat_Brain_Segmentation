@@ -1,4 +1,4 @@
-# Rat_Brain_Sementation
+# Rat_Brain_Segmentation
 Machine learning methods concering automatic segmentation of rat brain MRI images.
 
 ## Required software
